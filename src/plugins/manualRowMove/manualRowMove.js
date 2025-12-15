@@ -361,7 +361,7 @@ class ManualRowMove extends BasePlugin {
 
     const wtTable = this.hot.view.wt.wtTable;
     const TD = priv.target.TD;
-    const rootElementOffset = offset(this.hot.rootElement);
+    const rootElementOffset = offset(this.hot.rootElement, { checkParentOverlay: true });
     let tdOffsetTop = this.hot.view.THEAD.offsetHeight + this.getRowsHeight(0, coords.row);
     const mouseOffsetTop = priv.target.eventPageY - rootElementOffset.top + wtTable.holder.scrollTop;
     const hiderHeight = wtTable.hider.offsetHeight;

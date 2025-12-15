@@ -488,15 +488,42 @@ export function isVisible(elem) {
  * Returns elements top and left offset relative to the document. Function is not compatible with jQuery offset.
  *
  * @param {HTMLElement} elem
+ * @param options
  * @return {Object} Returns object with `top` and `left` props
  */
-export function offset(elem) {
+export function offset(elem, options = { checkParentOverlay: false }) {
   const docElem = document.documentElement;
   let elementToCheck = elem;
   let offsetLeft;
   let offsetTop;
   let lastElem;
   let box;
+
+  if (options.checkParentOverlay) {
+    // NOTE: Angular CDK dialogs/overlays position the overlay pane using CSS transforms (e.g. translate3d).
+    // The legacy offset() implementation based on offsetParent/offsetTop does NOT account for transformed ancestors,
+    // so the computed "document offset" can be wrong. This breaks coordinate calculations in Handsontable plugins
+    // (e.g. manualRowMove) and may prevent dropping a row at the very end when the table is rendered in a dialog.
+    // If the element is inside a CDK overlay/dialog, or any ancestor has a non-'none' transform, we fallback to
+    // getBoundingClientRect() + page scroll offsets, which correctly reflects the element’s visual position.
+    const inCdkOverlay =
+      typeof elem.closest === 'function' &&
+      !!elem.closest('.cdk-overlay-pane, .mat-dialog-container');
+    let hasTransformAncestor = false;
+    for (let p = elem.parentElement; p; p = p.parentElement) {
+      const t = window.getComputedStyle(p).transform;
+      if (t && t !== 'none') {
+        hasTransformAncestor = true; break;
+      }
+    }
+    if (inCdkOverlay || hasTransformAncestor) {
+      box = elem.getBoundingClientRect();
+      return {
+        top: box.top + (window.pageYOffset || docElem.scrollTop) - (docElem.clientTop || 0),
+        left: box.left + (window.pageXOffset || docElem.scrollLeft) - (docElem.clientLeft || 0),
+      };
+    }
+  }
 
   if (hasCaptionProblem() && elementToCheck.firstChild && elementToCheck.firstChild.nodeName === 'CAPTION') {
     // fixes problem with Firefox ignoring <caption> in TABLE offset (see also export outerHeight)

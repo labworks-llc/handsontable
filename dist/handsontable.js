@@ -23,8 +23,8 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
- * Version: 6.2.22
- * Release date: 19/12/2018 (built at 21/03/2024 21:38:11)
+ * Version: 6.2.23
+ * Release date: 19/12/2018 (built at 15/12/2025 19:26:22)
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -645,15 +645,43 @@ function isVisible(elem) {
  * Returns elements top and left offset relative to the document. Function is not compatible with jQuery offset.
  *
  * @param {HTMLElement} elem
+ * @param options
  * @return {Object} Returns object with `top` and `left` props
  */
 function offset(elem) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
+    checkParentOverlay: false
+  };
   var docElem = document.documentElement;
   var elementToCheck = elem;
   var offsetLeft;
   var offsetTop;
   var lastElem;
   var box;
+  if (options.checkParentOverlay) {
+    // NOTE: Angular CDK dialogs/overlays position the overlay pane using CSS transforms (e.g. translate3d).
+    // The legacy offset() implementation based on offsetParent/offsetTop does NOT account for transformed ancestors,
+    // so the computed "document offset" can be wrong. This breaks coordinate calculations in Handsontable plugins
+    // (e.g. manualRowMove) and may prevent dropping a row at the very end when the table is rendered in a dialog.
+    // If the element is inside a CDK overlay/dialog, or any ancestor has a non-'none' transform, we fallback to
+    // getBoundingClientRect() + page scroll offsets, which correctly reflects the element’s visual position.
+    var inCdkOverlay = typeof elem.closest === 'function' && !!elem.closest('.cdk-overlay-pane, .mat-dialog-container');
+    var hasTransformAncestor = false;
+    for (var p = elem.parentElement; p; p = p.parentElement) {
+      var t = window.getComputedStyle(p).transform;
+      if (t && t !== 'none') {
+        hasTransformAncestor = true;
+        break;
+      }
+    }
+    if (inCdkOverlay || hasTransformAncestor) {
+      box = elem.getBoundingClientRect();
+      return {
+        top: box.top + (window.pageYOffset || docElem.scrollTop) - (docElem.clientTop || 0),
+        left: box.left + (window.pageXOffset || docElem.scrollLeft) - (docElem.clientLeft || 0)
+      };
+    }
+  }
   if ((0, _feature.hasCaptionProblem)() && elementToCheck.firstChild && elementToCheck.firstChild.nodeName === 'CAPTION') {
     // fixes problem with Firefox ignoring <caption> in TABLE offset (see also export outerHeight)
     // http://jsperf.com/offset-vs-getboundingclientrect/8
@@ -27182,9 +27210,9 @@ Handsontable.DefaultSettings = _defaultSettings.default;
 Handsontable.EventManager = _eventManager.default;
 Handsontable._getListenersCounter = _eventManager.getListenersCounter; // For MemoryLeak tests
 
-Handsontable.buildDate = "21/03/2024 21:38:11";
+Handsontable.buildDate = "15/12/2025 19:26:22";
 Handsontable.packageName = "handsontable-labworks";
-Handsontable.version = "6.2.22";
+Handsontable.version = "6.2.23";
 var baseVersion = "";
 if (baseVersion) {
   Handsontable.baseVersion = baseVersion;
@@ -51169,7 +51197,9 @@ var ManualRowMove = /*#__PURE__*/function (_BasePlugin) {
       }
       var wtTable = this.hot.view.wt.wtTable;
       var TD = priv.target.TD;
-      var rootElementOffset = (0, _element.offset)(this.hot.rootElement);
+      var rootElementOffset = (0, _element.offset)(this.hot.rootElement, {
+        checkParentOverlay: true
+      });
       var tdOffsetTop = this.hot.view.THEAD.offsetHeight + this.getRowsHeight(0, coords.row);
       var mouseOffsetTop = priv.target.eventPageY - rootElementOffset.top + wtTable.holder.scrollTop;
       var hiderHeight = wtTable.hider.offsetHeight;
