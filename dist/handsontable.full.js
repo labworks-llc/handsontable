@@ -24,7 +24,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  * Version: 6.2.23
- * Release date: 19/12/2018 (built at 15/12/2025 19:26:22)
+ * Release date: 19/12/2018 (built at 17/12/2025 14:29:13)
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -5213,8 +5213,8 @@ function offset(elem) {
     var inCdkOverlay = typeof elem.closest === 'function' && !!elem.closest('.cdk-overlay-pane, .mat-dialog-container');
     var hasTransformAncestor = false;
     for (var p = elem.parentElement; p; p = p.parentElement) {
-      var t = window.getComputedStyle(p).transform;
-      if (t && t !== 'none') {
+      var transformValue = window.getComputedStyle(p).transform;
+      if (transformValue && transformValue !== 'none') {
         hasTransformAncestor = true;
         break;
       }
@@ -43421,7 +43421,7 @@ Handsontable.DefaultSettings = _defaultSettings.default;
 Handsontable.EventManager = _eventManager.default;
 Handsontable._getListenersCounter = _eventManager.getListenersCounter; // For MemoryLeak tests
 
-Handsontable.buildDate = "15/12/2025 19:26:22";
+Handsontable.buildDate = "17/12/2025 14:29:13";
 Handsontable.packageName = "handsontable-labworks";
 Handsontable.version = "6.2.23";
 var baseVersion = "";

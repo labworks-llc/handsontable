@@ -511,9 +511,10 @@ export function offset(elem, options = { checkParentOverlay: false }) {
       !!elem.closest('.cdk-overlay-pane, .mat-dialog-container');
     let hasTransformAncestor = false;
     for (let p = elem.parentElement; p; p = p.parentElement) {
-      const t = window.getComputedStyle(p).transform;
-      if (t && t !== 'none') {
-        hasTransformAncestor = true; break;
+      const transformValue = window.getComputedStyle(p).transform;
+      if (transformValue && transformValue !== 'none') {
+        hasTransformAncestor = true;
+        break;
       }
     }
     if (inCdkOverlay || hasTransformAncestor) {
